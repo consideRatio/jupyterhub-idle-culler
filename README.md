@@ -101,3 +101,54 @@ The command line interface also gives a quick overview of the different options 
 
 3. By default HTTP requests to the hub timeout after 60 seconds. This can be
    changed by setting the `JUPYTERHUB_REQUEST_TIMEOUT` environment variable.
+
+## How it works
+
+jupyterhub-idle-culler culls user servers using JupyterHub's REST API
+([/users/{name}/server](https://jupyterhub.readthedocs.io/en/stable/_static/rest-api/index.html#operation--users--name--server-delete)
+or
+[/users/{name}/servers/{server_name}](https://jupyterhub.readthedocs.io/en/stable/_static/rest-api/index.html#operation--users--name--servers--server_name--delete)),
+and makes the culling decisions based on its configuration and what JupyterHub
+reports about the user servers via its REST API
+[(/users)](https://jupyterhub.readthedocs.io/en/stable/_static/rest-api/index.html#path--users)
+where user servers' `last_activity` is reported.
+
+JupyterHub itself updates information about the user server's last activity at a
+regular interval via the [`update_last_activity` function (Link to JupyterHub
+version
+1.4.1)](https://github.com/jupyterhub/jupyterhub/blob/1.4.1/jupyterhub/app.py#L2650).
+The `update_last_activity` function then in turn collects and combine
+information about activity both from the deployed JupyterHub's configured [Proxy
+class](https://jupyterhub.readthedocs.io/en/stable/reference/proxy.html) and
+configured [Spawner
+class](https://jupyterhub.readthedocs.io/en/stable/reference/spawners.html).
+
+The Proxy class, if it supports it, will return activity information related to
+served network traffic between a web browser and the user server, while the
+Spawner class will return activity information related to kernel's activity,
+such as if a server is running code or similar.
+
+The user server's kernel activity, which impacts the decisions made by
+jupyterhub-idle-culler, can in turn can be influenced by a kernel manager that
+can be configured to cull kernels running within the user server. See the
+[Jupyter Notebook server
+documentation](https://jupyter-notebook.readthedocs.io/en/stable/config.html#options)
+for more information about configuration options of relevance like these:
+
+- `MappingKernelManager.cull_busy`
+- `MappingKernelManager.cull_idle_timeout`
+- `MappingKernelManager.cull_interval`
+- `MappingKernelManager.cull_connected`
+
+  Note that `cull_connected` probably makes sense to set to `True` if your
+  JupyterHub users use a JupyterLab based user interface, see [this issue for
+  more details](https://github.com/jupyterlab/jupyterlab/issues/6893).
+
+Keep in mind that configuration of MappingKernelManager should be made on the
+user server itself, for example via a `jupyter_notebook_config.py` file in
+`/etc/jupyter` or `/usr/local/etc/jupyter` rather than where JupyterHub itself
+is running.
+
+Also note that a Jupyter Notebook server can shut itself down without without
+intervention by the `jupyterhub-idle-culler` if
+`NotebookApp.shutdown_no_activity_timeout` is configured.
