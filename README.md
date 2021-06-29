@@ -117,7 +117,7 @@ JupyterHub itself updates information about the user server's last activity at a
 regular interval via the [`update_last_activity` function (Link to JupyterHub
 version
 1.4.1)](https://github.com/jupyterhub/jupyterhub/blob/1.4.1/jupyterhub/app.py#L2650).
-The `update_last_activity` function then in turn collects and combine
+The `update_last_activity` function then in turn collects and combines
 information about activity both from the deployed JupyterHub's configured [Proxy
 class](https://jupyterhub.readthedocs.io/en/stable/reference/proxy.html) and
 configured [Spawner
@@ -129,7 +129,7 @@ Spawner class will return activity information related to kernel's activity,
 such as if a server is running code or similar.
 
 The user server's kernel activity, which impacts the decisions made by
-jupyterhub-idle-culler, can in turn can be influenced by a kernel manager that
+jupyterhub-idle-culler, can in turn be influenced by a kernel manager that
 can be configured to cull kernels running within the user server. See the
 [Jupyter Notebook server
 documentation](https://jupyter-notebook.readthedocs.io/en/stable/config.html#options)
